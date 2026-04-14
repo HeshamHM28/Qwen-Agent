@@ -485,15 +485,23 @@ def extract_images_from_messages(messages: List[Message]) -> List[str]:
 
 
 def merge_generate_cfgs(base_generate_cfg: Optional[dict], new_generate_cfg: Optional[dict]) -> dict:
-    generate_cfg: dict = copy.deepcopy(base_generate_cfg or {})
-    if new_generate_cfg:
-        for k, v in new_generate_cfg.items():
-            if k == 'stop':
-                stop = generate_cfg.get('stop', [])
-                stop = stop + [s for s in v if s not in stop]
-                generate_cfg['stop'] = stop
-            else:
-                generate_cfg[k] = v
+    # Fast paths to avoid unnecessary deep copy
+    if not base_generate_cfg and not new_generate_cfg:
+        return {}
+    if not base_generate_cfg:
+        return copy.deepcopy(new_generate_cfg)
+    if not new_generate_cfg:
+        return copy.deepcopy(base_generate_cfg)
+    generate_cfg: dict = copy.deepcopy(base_generate_cfg)
+    for k, v in new_generate_cfg.items():
+        if k == 'stop':
+            stop = generate_cfg.get('stop', [])
+            # Use a set for O(1) membership testing instead of O(n) list scan
+            existing = set(stop)
+            stop = stop + [s for s in v if s not in existing]
+            generate_cfg['stop'] = stop
+        else:
+            generate_cfg[k] = v
     return generate_cfg
 
 
