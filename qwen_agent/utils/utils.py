@@ -462,26 +462,27 @@ def extract_text_from_message(
     return text.strip()
 
 
-def extract_files_from_messages(messages: List[Message], include_images: bool) -> List[str]:
-    files = []
+def _extract_from_messages(messages: List[Message], include_files: bool = True, include_images: bool = True) -> List[str]:
+    result = []
+    seen = set()
     for msg in messages:
         if isinstance(msg.content, list):
             for item in msg.content:
-                if item.file and item.file not in files:
-                    files.append(item.file)
-                if include_images and item.image and item.image not in files:
-                    files.append(item.image)
-    return files
+                if include_files and item.file and item.file not in seen:
+                    seen.add(item.file)
+                    result.append(item.file)
+                if include_images and item.image and item.image not in seen:
+                    seen.add(item.image)
+                    result.append(item.image)
+    return result
+
+
+def extract_files_from_messages(messages: List[Message], include_images: bool) -> List[str]:
+    return _extract_from_messages(messages, include_files=True, include_images=include_images)
 
 
 def extract_images_from_messages(messages: List[Message]) -> List[str]:
-    files = []
-    for msg in messages:
-        if isinstance(msg.content, list):
-            for item in msg.content:
-                if item.image and item.image not in files:
-                    files.append(item.image)
-    return files
+    return _extract_from_messages(messages, include_files=False, include_images=True)
 
 
 def merge_generate_cfgs(base_generate_cfg: Optional[dict], new_generate_cfg: Optional[dict]) -> dict:
