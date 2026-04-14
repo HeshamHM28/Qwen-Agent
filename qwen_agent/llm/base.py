@@ -545,6 +545,9 @@ def _format_as_text_messages(messages: List[Message]) -> List[Message]:
 
 
 def _postprocess_stop_words(messages: List[Message], stop: List[str]) -> List[Message]:
+    # Fast path: skip deep copy and processing when there are no stop words
+    if not stop:
+        return messages
     messages = copy.deepcopy(messages)
     if not messages:
         return messages
