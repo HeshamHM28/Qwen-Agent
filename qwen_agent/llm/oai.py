@@ -64,6 +64,10 @@ class TextChatAtOAI(BaseFnCallModel):
             if api_key:
                 api_kwargs['api_key'] = api_key
 
+            # Reuse a single OpenAI client instance instead of creating one per API call.
+            # Client creation involves TLS setup, connection pool init, and config parsing.
+            _client = openai.OpenAI(**api_kwargs)
+
             def _chat_complete_create(*args, **kwargs):
                 # OpenAI API v1 does not allow the following args, must pass by extra_body
                 extra_params = ['top_k', 'repetition_penalty']
@@ -75,8 +79,7 @@ class TextChatAtOAI(BaseFnCallModel):
                 if 'request_timeout' in kwargs:
                     kwargs['timeout'] = kwargs.pop('request_timeout')
 
-                client = openai.OpenAI(**api_kwargs)
-                return client.chat.completions.create(*args, **kwargs)
+                return _client.chat.completions.create(*args, **kwargs)
 
             def _complete_create(*args, **kwargs):
                 # OpenAI API v1 does not allow the following args, must pass by extra_body
@@ -89,8 +92,7 @@ class TextChatAtOAI(BaseFnCallModel):
                 if 'request_timeout' in kwargs:
                     kwargs['timeout'] = kwargs.pop('request_timeout')
 
-                client = openai.OpenAI(**api_kwargs)
-                return client.completions.create(*args, **kwargs)
+                return _client.completions.create(*args, **kwargs)
 
             self._complete_create = _complete_create
             self._chat_complete_create = _chat_complete_create

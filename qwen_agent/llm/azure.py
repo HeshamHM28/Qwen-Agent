@@ -48,8 +48,9 @@ class TextChatAtAzure(TextChatAtOAI):
         if api_version:
             api_kwargs['api_version'] = api_version
 
+        _client = openai.AzureOpenAI(**api_kwargs)
+
         def _chat_complete_create(*args, **kwargs):
-            client = openai.AzureOpenAI(**api_kwargs)
-            return client.chat.completions.create(*args, **kwargs)
+            return _client.chat.completions.create(*args, **kwargs)
 
         self._chat_complete_create = _chat_complete_create
